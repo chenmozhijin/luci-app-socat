@@ -1,0 +1,76 @@
+name: build
+on:
+    workflow_dispatch:
+permissions:
+  contents: write
+  discussions: write
+jobs:
+  build:
+    runs-on: ubuntu-22.04
+    env:
+        PACKAGE_NAME: luci-app-socat
+    steps:
+      - name: 安装编译依赖
+        run: |
+          sudo -E apt-mark hold grub-efi-amd64-signed
+          sudo -E apt update
+          sudo -E apt -y full-upgrade
+          sudo apt install -y ack antlr3 aria2 asciidoc autoconf automake autopoint binutils bison build-essential bzip2 ccache cmake cpio curl device-tree-compiler fastjar flex gawk gettext gcc-multilib g++-multilib git gperf haveged help2man intltool libc6-dev-i386 libelf-dev libglib2.0-dev libgmp3-dev libltdl-dev libmpc-dev libmpfr-dev libncurses5-dev libncursesw5-dev libreadline-dev libssl-dev libtool lrzsz mkisofs msmtp nano ninja-build p7zip p7zip-full patch pkgconf python2.7 python3 python3-pip libpython3-dev qemu-utils clang g++ python3-distutils rsync unzip zlib1g-dev wget
+          sudo -E systemctl daemon-reload 
+          sudo -E apt -y autoremove --purge
+          sudo -E apt clean
+          sudo timedatectl set-timezone "Asia/Shanghai"
+
+      - name: 下载SDK
+        run: |
+          url=https://downloads.openwrt.org/releases/23.05.0-rc4/targets/x86/64/openwrt-sdk-23.05.0-rc4-x86-64_gcc-12.3.0_musl.Linux-x86_64.tar.xz
+          wget -O openwrt.tar.xz $url
+          tar xvf openwrt.tar.xz
+          mv $(basename $url | awk -F '.tar.xz' '{ print $1 }') openwrt
+          cd openwrt
+          export OPENWRT_ROOT_PATH="$(pwd)"
+          echo "OPENWRT_ROOT_PATH=$OPENWRT_ROOT_PATH" >> $GITHUB_ENV
+          cd $GITHUB_WORKSPACE && cat $GITHUB_ENV >> prepare_ENV
+
+      - name: 将存储库签出到运行器
+        uses: actions/checkout@v3
+        with:
+          path: ${{ env.OPENWRT_ROOT_PATH }}/package/${{ env.PACKAGE_NAME }}-clone
+
+      - name: 移动源代码
+        run: |
+            cp -RT ${{ env.OPENWRT_ROOT_PATH }}/package/${{ env.PACKAGE_NAME }}-clone/${{ env.PACKAGE_NAME }} ${{ env.OPENWRT_ROOT_PATH }}/package/
+            rm -rf ${{ env.OPENWRT_ROOT_PATH }}/package/${{ env.PACKAGE_NAME }}-clone
+
+      - name: 更新 feeds 
+        working-directory: ${{ env.OPENWRT_ROOT_PATH }}
+        run: |
+          ./scripts/feeds update -a
+          ./scripts/feeds install -a
+
+      - name: 加载自定义配置并生成配置文件
+        working-directory: ${{ env.OPENWRT_ROOT_PATH }}
+        run: |
+          echo "CONFIG_PACKAGE_${{ env.PACKAGE_NAME }}=m" > .config
+          echo "CONFIG_TARGET_x86=y" >> $OPENWRT_ROOT_PATH/.config
+          echo "CONFIG_TARGET_x86_64=y" >> $OPENWRT_ROOT_PATH/.config
+          echo "CONFIG_TARGET_x86_64_DEVICE_generic=y" >> $OPENWRT_ROOT_PATH/.config
+          make defconfig
+          ./scripts/diffconfig.sh
+
+      - name: 编译
+        working-directory: ${{ env.OPENWRT_ROOT_PATH }}
+        run: |
+          make package/chenmozhijin-package/${{ env.PACKAGE_NAME }}/compile -j$(nproc) || make package/chenmozhijin-package/${{ env.PACKAGE_NAME }}/compile -j1 V=sc
+
+      - name: 准备 artifact
+        working-directory: ${{ env.OPENWRT_ROOT_PATH }}
+        run: |
+          mkdir -p ./artifact
+          cp -rf $(find ./bin/packages/ -type f -name "${{ env.PACKAGE_NAME }}*.ipk") ./artifact || cp -rf $(find ./bin/targets/ -type f -name "*.ipk") ./artifact || cp -rf $(find ./bin/packages/ -type f -name "*.ipk") ./artifact || exit 0
+
+      - name: 上传build artifacts
+        uses: actions/upload-artifact@v2
+        with:
+          name: ${{ env.PACKAGE_NAME }}
+          path: ${{ env.OPENWRT_ROOT_PATH }}/artifact/*
