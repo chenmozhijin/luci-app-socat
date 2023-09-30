@@ -39,7 +39,7 @@ jobs:
 
       - name: 移动源代码
         run: |
-            cp -RT ${{ env.OPENWRT_ROOT_PATH }}/package/${{ env.PACKAGE_NAME }}-clone/${{ env.PACKAGE_NAME }} ${{ env.OPENWRT_ROOT_PATH }}/package/
+            cp -RT ${{ env.OPENWRT_ROOT_PATH }}/package/${{ env.PACKAGE_NAME }}-clone/${{ env.PACKAGE_NAME }} ${{ env.OPENWRT_ROOT_PATH }}/package/${{ env.PACKAGE_NAME }}
             rm -rf ${{ env.OPENWRT_ROOT_PATH }}/package/${{ env.PACKAGE_NAME }}-clone
 
       - name: 更新 feeds 
