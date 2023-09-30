@@ -61,6 +61,7 @@ jobs:
       - name: 编译
         working-directory: ${{ env.OPENWRT_ROOT_PATH }}
         run: |
+          ls -la $(find package/ -type d)
           make package/chenmozhijin-package/${{ env.PACKAGE_NAME }}/compile -j$(nproc) || make package/chenmozhijin-package/${{ env.PACKAGE_NAME }}/compile -j1 V=sc
 
       - name: 准备 artifact
