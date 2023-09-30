@@ -70,7 +70,7 @@ jobs:
           cp -rf $(find ./bin/packages/ -type f -name "${{ env.PACKAGE_NAME }}*.ipk") ./artifact || cp -rf $(find ./bin/targets/ -type f -name "*.ipk") ./artifact || cp -rf $(find ./bin/packages/ -type f -name "*.ipk") ./artifact || exit 0
 
       - name: 上传build artifacts
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v3
         with:
           name: ${{ env.PACKAGE_NAME }}
           path: ${{ env.OPENWRT_ROOT_PATH }}/artifact/*
