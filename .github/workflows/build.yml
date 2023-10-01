@@ -9,6 +9,7 @@ jobs:
     runs-on: ubuntu-22.04
     env:
         PACKAGE_NAME: luci-app-socat
+        PACKAGE_I18N_NAME: luci-i18n-socat-zh-cn
     steps:
       - name: 安装编译依赖
         run: |
@@ -55,6 +56,7 @@ jobs:
           echo "CONFIG_TARGET_x86=y" >> $OPENWRT_ROOT_PATH/.config
           echo "CONFIG_TARGET_x86_64=y" >> $OPENWRT_ROOT_PATH/.config
           echo "CONFIG_TARGET_x86_64_DEVICE_generic=y" >> $OPENWRT_ROOT_PATH/.config
+          echo "CONFIG_LUCI_LANG_zh_Hans=y" >> $OPENWRT_ROOT_PATH/.config
           make defconfig
           ./scripts/diffconfig.sh
 
@@ -67,7 +69,7 @@ jobs:
         working-directory: ${{ env.OPENWRT_ROOT_PATH }}
         run: |
           mkdir -p ./artifact
-          cp -rf $(find ./bin/packages/ -type f -name "${{ env.PACKAGE_NAME }}*.ipk") ./artifact || cp -rf $(find ./bin/targets/ -type f -name "*.ipk") ./artifact || cp -rf $(find ./bin/packages/ -type f -name "*.ipk") ./artifact || exit 0
+          cp -rf $(find ./bin/packages/ -type f -name "${{ env.PACKAGE_NAME }}*.ipk" -o -name "${{ env.PACKAGE_I18N_NAME }}*.ipk") ./artifact || cp -rf $(find ./bin/targets/ -type f -name "*.ipk") ./artifact || cp -rf $(find ./bin/packages/ -type f -name "*.ipk") ./artifact || exit 0
 
       - name: 上传build artifacts
         uses: actions/upload-artifact@v3
