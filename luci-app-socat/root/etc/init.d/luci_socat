@@ -46,7 +46,10 @@ run_service() {
 	config_get proxy_port $1 proxy_port
 	config_get firewall_accept $1 firewall_accept
 	ln -s /usr/bin/socat ${CONFIG_PATH}/$1
-	
+
+	if [ "$dest_proto" == "tcp6" ] || [ "$dest_proto" == "udp6" ]; then
+        dest_ip="[$dest_ip]"
+    fi
 	if [ "$reuseaddr" == "1" ]; then
 		reuseaddr=",reuseaddr"
 	else
