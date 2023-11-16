@@ -7,7 +7,7 @@ CONFIG=socat
 CONFIG_PATH=/var/etc/$CONFIG
 
 add_rule() {
-	accept_port=$(cat /var/etc/$CONFIG.port | tr "\n" " ") || echo "not open firewall ports"
+	accept_port=$(cat /var/etc/$CONFIG.port 2>/dev/null | tr "\n" " ")
 	if [ "$accept_port" ]; then
 		uci -q delete firewall.socat
 		uci set firewall.socat=rule
@@ -19,6 +19,7 @@ add_rule() {
 		uci commit firewall
 		/etc/init.d/firewall reload >/dev/null 2>&1
 	else
+		echo "not open firewall ports"
 		del_rule
 	fi
 }
