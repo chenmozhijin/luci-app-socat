@@ -24,7 +24,7 @@ jobs:
 
       - name: 下载SDK
         run: |
-          url=https://downloads.openwrt.org/releases/23.05.0-rc4/targets/x86/64/openwrt-sdk-23.05.0-rc4-x86-64_gcc-12.3.0_musl.Linux-x86_64.tar.xz
+          url=https://downloads.openwrt.org/releases/23.05.2/targets/x86/64/openwrt-sdk-23.05.2-x86-64_gcc-12.3.0_musl.Linux-x86_64.tar.xz
           wget -O openwrt.tar.xz $url
           tar xvf openwrt.tar.xz
           mv $(basename $url | awk -F '.tar.xz' '{ print $1 }') openwrt
