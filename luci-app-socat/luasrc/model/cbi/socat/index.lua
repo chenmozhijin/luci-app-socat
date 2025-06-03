@@ -4,6 +4,8 @@ local e = luci.model.uci.cursor()
 m = Map("socat")
 m.title = translate("Socat")
 m.description = translate("Socat is a versatile networking tool named after 'Socket CAT', which can be regarded as an N-fold enhanced version of NetCat")
+m.apply_on_parse = true
+m.on_apply = function() luci.sys.call("/etc/init.d/luci_socat restart") end
 
 s = m:section(NamedSection, "global", "global")
 s.anonymous = true
